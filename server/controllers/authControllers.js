@@ -45,7 +45,7 @@ export const register = async (req, res) => {
             from: process.env.SENDER_EMAIL,
             to: email,
             subject: 'Welcome to Mern-Auth',
-            text: `Welcome to Mern-Auth Website. Your account has been created with email id: ${email}` 
+            text: `Welcome to Mern-Auth Website. Your account has been created with email id: ${email}`
         }
 
         await transporter.sendMail(mailOptions)
@@ -140,3 +140,123 @@ export const logout = async (req, res) => {
         })
     }
 }
+
+//send verification OTP to the user's email
+export const sendVerifyOtp = async (req, res) => {
+    try {
+
+        const { userId } = req.body;
+
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                message: "User Not Found"
+            })
+        }
+
+        const user = await userModel.findById(userId);
+
+        if (user.isAccountVerified) {
+            return res.status(400).json({
+                success: false,
+                message: "Account already Verified"
+            })
+        }
+
+        const otp = String(Math.floor(100000 + Math.random() * 900000))
+
+        user.verifyOtp = otp
+        user.verifyOtpExpireAt = Date.now() + 24 * 60 * 60 * 1000
+
+        await user.save()
+
+        const mailOptions = {
+            from: process.env.SENDER_EMAIL,
+            to: user.email,
+            subject: 'Account Verification OTP',
+            text: `Your OTP is ${otp}. Verify your account using this OTP.`
+        }
+
+        await transporter.sendMail(mailOptions);
+
+        return res.status(200).json({
+            success: true,
+            message: "Verification OTP Sent on Email"
+        })
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            success: false,
+            message: error.message,
+        })
+    }
+}
+
+export const verifyEmail = async (req, res) => {
+    try {
+
+        const {userId, otp} = req.body;
+
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                message: "User Not Found"
+            })
+        }
+
+        if(!otp){
+            return res.status(400).json({
+                success: false,
+                message: "Please enter otp"
+            })
+        }
+
+        const user = await userModel.findById(userId)
+
+        if(!user){
+            return res.status(400).json({
+                success: false,
+                message: "User Not Found"
+            })
+        }
+
+        const userSendOtp = otp;
+        const userOriginalOtp = user.verifyOtp;
+        const expireOtpDate = user.verifyOtpExpireAt;
+        const currentDate = Date.now();
+
+        if(user.verifyOtp === '' || userSendOtp !== userOriginalOtp){
+            return res.status(400).json({
+                success: false,
+                message: "Invalid OTP"
+            })
+        }
+
+        if(currentDate > expireOtpDate){ //23 > 24
+            return res.status(400).json({
+                success: false,
+                message: "OTP is Expire. Resend Otp"
+            })
+        }        
+        
+        user.isAccountVerified = true
+        user.verifyOtp = ""
+        user.verifyOtpExpireAt = 0
+
+        await user.save()
+
+        return res.status(200).json({
+            success: true,
+            message: "User email verify successfully"
+        })
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            success: false,
+            message: error.message,
+        })
+    }
+}
+
