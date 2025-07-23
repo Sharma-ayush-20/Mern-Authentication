@@ -193,6 +193,7 @@ export const sendVerifyOtp = async (req, res) => {
     }
 }
 
+//verify user email with OTP
 export const verifyEmail = async (req, res) => {
     try {
 
