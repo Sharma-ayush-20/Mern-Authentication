@@ -197,7 +197,7 @@ export const sendVerifyOtp = async (req, res) => {
 export const verifyEmail = async (req, res) => {
     try {
 
-        const {userId, otp} = req.body;
+        const { userId, otp } = req.body;
 
         if (!userId) {
             return res.status(400).json({
@@ -206,7 +206,7 @@ export const verifyEmail = async (req, res) => {
             })
         }
 
-        if(!otp){
+        if (!otp) {
             return res.status(400).json({
                 success: false,
                 message: "Please enter otp"
@@ -215,7 +215,7 @@ export const verifyEmail = async (req, res) => {
 
         const user = await userModel.findById(userId)
 
-        if(!user){
+        if (!user) {
             return res.status(400).json({
                 success: false,
                 message: "User Not Found"
@@ -227,20 +227,20 @@ export const verifyEmail = async (req, res) => {
         const expireOtpDate = user.verifyOtpExpireAt;
         const currentDate = Date.now();
 
-        if(user.verifyOtp === '' || userSendOtp !== userOriginalOtp){
+        if (user.verifyOtp === '' || userSendOtp !== userOriginalOtp) {
             return res.status(400).json({
                 success: false,
                 message: "Invalid OTP"
             })
         }
 
-        if(currentDate > expireOtpDate){ //23 > 24
+        if (currentDate > expireOtpDate) { //23 > 24
             return res.status(400).json({
                 success: false,
                 message: "OTP is Expire. Resend Otp"
             })
-        }        
-        
+        }
+
         user.isAccountVerified = true
         user.verifyOtp = ""
         user.verifyOtpExpireAt = 0
@@ -261,3 +261,19 @@ export const verifyEmail = async (req, res) => {
     }
 }
 
+//check if user is authenticated
+export const isAuthenticated = async (req, res) => {
+    try {
+
+        return res.json({
+            success: true,
+        })
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            success: false,
+            message: error.message,
+        })
+    }
+}
