@@ -9,8 +9,11 @@ import userRouter from "./routes/userRoutes.js";
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+const allowedOrigins = ['http://localhost:5173']
+
 app.use(cors({
     credentials: true,
+    origin: allowedOrigins,
 }));
 app.use(cookieParser());
 app.use(express.json());
